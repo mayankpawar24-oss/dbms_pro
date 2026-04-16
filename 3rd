@@ -1,0 +1,113 @@
+-- Step 1: Create Database
+CREATE DATABASE supplier_db;
+USE supplier_db;
+
+-- Step 2: Create Tables
+
+CREATE TABLE supplier (
+    supplierid INT PRIMARY KEY,
+    sname VARCHAR(50),
+    saddress VARCHAR(100)
+);
+
+CREATE TABLE parts (
+    part_id INT PRIMARY KEY,
+    part_name VARCHAR(50),
+    color VARCHAR(20)
+);
+
+CREATE TABLE catalog (
+    supplierid INT,
+    part_id INT,
+    cost INT,
+    PRIMARY KEY (supplierid, part_id),
+    FOREIGN KEY (supplierid) REFERENCES supplier(supplierid),
+    FOREIGN KEY (part_id) REFERENCES parts(part_id)
+);
+
+-- Step 3: Insert Sample Data
+
+INSERT INTO supplier VALUES
+(1, 'ABC Suppliers', 'Pune'),
+(2, 'XYZ Traders', 'Mumbai'),
+(3, 'Global Parts', 'Delhi');
+
+INSERT INTO parts VALUES
+(1, 'Bolt', 'green'),
+(2, 'Nut', 'blue'),
+(3, 'Screw', 'red'),
+(4, 'Washer', 'green');
+
+INSERT INTO catalog VALUES
+(1, 1, 100),
+(1, 2, 150),
+(2, 1, 90),
+(2, 4, 120),
+(3, 1, 110),
+(3, 2, 140),
+(3, 3, 200),
+(3, 4, 130);
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 1. Suppliers who supply GREEN parts
+
+SELECT DISTINCT s.sname
+FROM supplier s
+JOIN catalog c ON s.supplierid = c.supplierid
+JOIN parts p ON c.part_id = p.part_id
+WHERE p.color = 'green';
+
+-- 2. Suppliers who supply BOTH blue AND green parts
+
+SELECT s.sname
+FROM supplier s
+JOIN catalog c ON s.supplierid = c.supplierid
+JOIN parts p ON c.part_id = p.part_id
+WHERE p.color IN ('blue', 'green')
+GROUP BY s.supplierid, s.sname
+HAVING COUNT(DISTINCT p.color) = 2;
+
+-- 3. Suppliers who supply ALL parts
+
+SELECT s.sname
+FROM supplier s
+JOIN catalog c ON s.supplierid = c.supplierid
+GROUP BY s.supplierid, s.sname
+HAVING COUNT(DISTINCT c.part_id) = (
+    SELECT COUNT(*) FROM parts
+);
+
+-- 4. Total cost of RED parts
+
+SELECT SUM(c.cost) AS total_red_cost
+FROM catalog c
+JOIN parts p ON c.part_id = p.part_id
+WHERE p.color = 'red';
+
+-- 5. Supplier supplying GREEN parts with MINIMUM cost
+
+SELECT s.sname, MIN(c.cost) AS min_cost
+FROM supplier s
+JOIN catalog c ON s.supplierid = c.supplierid
+JOIN parts p ON c.part_id = p.part_id
+WHERE p.color = 'green'
+GROUP BY s.supplierid, s.sname
+HAVING MIN(c.cost) = (
+    SELECT MIN(c2.cost)
+    FROM catalog c2
+    JOIN parts p2 ON c2.part_id = p2.part_id
+    WHERE p2.color = 'green'
+);
+
+-- 6. Update color of part having part_id = 4 (supplier_id not needed here)
+
+UPDATE parts
+SET color = 'blue'
+WHERE part_id = 4;
+
+-- Check updated parts
+
+SELECT * FROM parts;
