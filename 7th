@@ -1,0 +1,103 @@
+-- Step 1: Create Database
+CREATE DATABASE car_rental_db;
+USE car_rental_db;
+
+-- Step 2: Create Tables with PK & FK
+
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Email VARCHAR(50),
+    Phone VARCHAR(15),
+    City VARCHAR(50)
+);
+
+CREATE TABLE Cars (
+    CarID INT PRIMARY KEY,
+    Model VARCHAR(50),
+    Brand VARCHAR(50),
+    Year INT,
+    RentalPricePerDay INT,
+    AvailabilityStatus VARCHAR(20)
+);
+
+CREATE TABLE Rentals (
+    RentalID INT PRIMARY KEY,
+    CustomerID INT,
+    CarID INT,
+    StartDate DATE,
+    EndDate DATE,
+    TotalAmount INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID),
+    FOREIGN KEY (CarID) REFERENCES Cars(CarID)
+);
+
+-- Step 3: Create Payments Table (Q1)
+
+CREATE TABLE Payments (
+    PaymentID INT PRIMARY KEY,
+    RentalID INT,
+    PaymentDate DATE,
+    AmountPaid INT,
+    PaymentMethod VARCHAR(30),
+    FOREIGN KEY (RentalID) REFERENCES Rentals(RentalID)
+);
+
+-- Step 4: Insert Sample Data
+
+INSERT INTO Customers VALUES
+(1, 'Amit', 'amit@gmail.com', '9999999999', 'Pune'),
+(2, 'Neha', 'neha@gmail.com', '8888888888', 'Mumbai'),
+(3, 'Rahul', 'rahul@gmail.com', '7777777777', 'Delhi');
+
+INSERT INTO Cars VALUES
+(101, 'Swift', 'Maruti', 2022, 800, 'Available'),
+(102, 'Creta', 'Hyundai', 2023, 1500, 'Available'),
+(103, 'X5', 'BMW', 2024, 3000, 'Available');
+
+INSERT INTO Rentals VALUES
+(201, 1, 102, '2024-04-01', '2024-04-05', 6000),
+(202, 2, 103, '2024-04-02', '2024-04-04', 6000),
+(203, 3, 101, '2024-04-03', '2024-04-06', 2400);
+
+INSERT INTO Payments VALUES
+(301, 201, '2024-04-01', 6000, 'UPI'),
+(302, 202, '2024-04-02', 6000, 'Card'),
+(303, 203, '2024-04-03', 2400, 'Cash');
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 2. Update AvailabilityStatus to 'Rented' for a specific CustomerID & CarID
+
+UPDATE Cars
+SET AvailabilityStatus = 'Rented'
+WHERE CarID = (
+    SELECT CarID FROM Rentals
+    WHERE CustomerID = 1 AND CarID = 102
+);
+
+-- 3. Customer Name, Car Model, StartDate where price per day > 1000
+
+SELECT c.Name, ca.Model, r.StartDate
+FROM Customers c
+JOIN Rentals r ON c.CustomerID = r.CustomerID
+JOIN Cars ca ON r.CarID = ca.CarID
+WHERE ca.RentalPricePerDay > 1000;
+
+-- 4. Total rental amount per Car Brand
+
+SELECT ca.Brand, SUM(r.TotalAmount) AS total_revenue
+FROM Rentals r
+JOIN Cars ca ON r.CarID = ca.CarID
+GROUP BY ca.Brand;
+
+-- 5. Top 3 customers who spent most on rentals
+
+SELECT c.Name, SUM(r.TotalAmount) AS total_spent
+FROM Customers c
+JOIN Rentals r ON c.CustomerID = r.CustomerID
+GROUP BY c.CustomerID, c.Name
+ORDER BY total_spent DESC
+LIMIT 3;
