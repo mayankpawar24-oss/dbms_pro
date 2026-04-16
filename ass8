@@ -1,0 +1,106 @@
+// Step 1: Use Database
+use salesDB
+
+// Step 2: Insert Sample Data (Orders Collection)
+
+db.orders.insertMany([
+  { order_id: 1, customer: "Amit", product: "Laptop", category: "Electronics", amount: 60000, city: "Pune" },
+  { order_id: 2, customer: "Neha", product: "Phone", category: "Electronics", amount: 20000, city: "Mumbai" },
+  { order_id: 3, customer: "Rahul", product: "Shoes", category: "Fashion", amount: 3000, city: "Delhi" },
+  { order_id: 4, customer: "Amit", product: "Watch", category: "Fashion", amount: 5000, city: "Pune" },
+  { order_id: 5, customer: "Neha", product: "Tablet", category: "Electronics", amount: 15000, city: "Mumbai" }
+]);
+
+// =====================================================
+// AGGREGATION QUERIES
+// =====================================================
+
+// 1. Total sales per category
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$category",
+      total_sales: { $sum: "$amount" }
+    }
+  }
+]);
+
+// 2. Average order amount per customer
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$customer",
+      avg_amount: { $avg: "$amount" }
+    }
+  }
+]);
+
+// 3. Highest order amount per category
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$category",
+      max_amount: { $max: "$amount" }
+    }
+  }
+]);
+
+// 4. Filter + aggregation (orders > 10000, then group)
+
+db.orders.aggregate([
+  {
+    $match: { amount: { $gt: 10000 } }
+  },
+  {
+    $group: {
+      _id: "$category",
+      total_high_sales: { $sum: "$amount" }
+    }
+  }
+]);
+
+// 5. Count number of orders per city
+
+db.orders.aggregate([
+  {
+    $group: {
+      _id: "$city",
+      total_orders: { $sum: 1 }
+    }
+  }
+]);
+
+// =====================================================
+// INDEXING
+// =====================================================
+
+// 1. Create index on customer field
+
+db.orders.createIndex({ customer: 1 });
+
+// 2. Create compound index (customer + category)
+
+db.orders.createIndex({ customer: 1, category: 1 });
+
+// 3. Create index on amount (for faster range queries)
+
+db.orders.createIndex({ amount: 1 });
+
+// =====================================================
+// USING INDEX (Query optimization examples)
+// =====================================================
+
+// Find orders by customer (uses index)
+
+db.orders.find({ customer: "Amit" });
+
+// Find orders with amount > 10000 (uses index)
+
+db.orders.find({ amount: { $gt: 10000 } });
+
+// Explain query performance (to check index usage)
+
+db.orders.find({ customer: "Amit" }).explain("executionStats");
