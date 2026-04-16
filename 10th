@@ -1,0 +1,111 @@
+-- Step 1: Create Database
+CREATE DATABASE hospital_db;
+USE hospital_db;
+
+-- Step 2: Create Tables with PK & FK
+
+CREATE TABLE Patients (
+    PatientID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Age INT,
+    Gender VARCHAR(10),
+    Contact VARCHAR(15)
+);
+
+CREATE TABLE Doctors (
+    DoctorID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Specialization VARCHAR(50),
+    Contact VARCHAR(15)
+);
+
+CREATE TABLE Appointments (
+    AppointmentID INT PRIMARY KEY,
+    PatientID INT,
+    DoctorID INT,
+    AppointmentDate DATE,
+    Status VARCHAR(20),
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID),
+    FOREIGN KEY (DoctorID) REFERENCES Doctors(DoctorID)
+);
+
+CREATE TABLE Bills (
+    BillID INT PRIMARY KEY,
+    PatientID INT,
+    Amount INT,
+    PaymentStatus VARCHAR(20),
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
+);
+
+-- Step 3: Create MedicalRecords Table (Q1)
+
+CREATE TABLE MedicalRecords (
+    RecordID INT PRIMARY KEY,
+    PatientID INT,
+    Diagnosis VARCHAR(100),
+    Prescription VARCHAR(100),
+    RecordDate DATE,
+    FOREIGN KEY (PatientID) REFERENCES Patients(PatientID)
+);
+
+-- Step 4: Insert Sample Data
+
+INSERT INTO Patients VALUES
+(1, 'Amit', 25, 'Male', '9999999999'),
+(2, 'Neha', 30, 'Female', '8888888888'),
+(3, 'Rahul', 40, 'Male', '7777777777');
+
+INSERT INTO Doctors VALUES
+(101, 'Dr. Sharma', 'Cardiology', '1111111111'),
+(102, 'Dr. Mehta', 'Dermatology', '2222222222'),
+(103, 'Dr. Singh', 'Orthopedics', '3333333333');
+
+INSERT INTO Appointments VALUES
+(201, 1, 101, '2024-04-01', 'Pending'),
+(202, 2, 102, '2024-04-02', 'Completed'),
+(203, 3, 101, '2024-04-03', 'Pending'),
+(204, 1, 103, '2024-04-04', 'Completed');
+
+INSERT INTO Bills VALUES
+(301, 1, 5000, 'Paid'),
+(302, 2, 3000, 'Paid'),
+(303, 3, 7000, 'Unpaid');
+
+INSERT INTO MedicalRecords VALUES
+(401, 1, 'Heart Issue', 'Medicine A', '2024-04-01'),
+(402, 2, 'Skin Allergy', 'Cream B', '2024-04-02');
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 2. Update appointment status to 'Completed' (example: AppointmentID = 201)
+
+UPDATE Appointments
+SET Status = 'Completed'
+WHERE AppointmentID = 201;
+
+-- 3. Patient name, Doctor name, Appointment date for specific specialization (e.g., Cardiology)
+
+SELECT p.Name AS patient_name, d.Name AS doctor_name, a.AppointmentDate
+FROM Patients p
+JOIN Appointments a ON p.PatientID = a.PatientID
+JOIN Doctors d ON a.DoctorID = d.DoctorID
+WHERE d.Specialization = 'Cardiology';
+
+-- 4. Total revenue collected per doctor
+
+SELECT d.Name, SUM(b.Amount) AS total_revenue
+FROM Doctors d
+JOIN Appointments a ON d.DoctorID = a.DoctorID
+JOIN Bills b ON a.PatientID = b.PatientID
+GROUP BY d.DoctorID, d.Name;
+
+-- 5. Top 3 doctors with highest number of appointments
+
+SELECT d.Name, COUNT(a.AppointmentID) AS total_appointments
+FROM Doctors d
+JOIN Appointments a ON d.DoctorID = a.DoctorID
+GROUP BY d.DoctorID, d.Name
+ORDER BY total_appointments DESC
+LIMIT 3;
