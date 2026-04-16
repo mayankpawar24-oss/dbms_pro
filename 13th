@@ -1,0 +1,108 @@
+-- Step 1: Create Database
+CREATE DATABASE university_db3;
+USE university_db3;
+
+-- Step 2: Create Tables
+
+CREATE TABLE Students (
+    StudentID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Age INT,
+    Gender VARCHAR(10),
+    Department VARCHAR(50),
+    Email VARCHAR(50)
+);
+
+CREATE TABLE Courses (
+    CourseID INT PRIMARY KEY,
+    CourseName VARCHAR(50),
+    Credits INT,
+    Department VARCHAR(50)
+);
+
+CREATE TABLE Professors (
+    ProfessorID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Department VARCHAR(50),
+    Email VARCHAR(50)
+);
+
+CREATE TABLE Enrollments (
+    StudentID INT,
+    CourseID INT,
+    EnrollmentDate DATE,
+    Grade DECIMAL(3,1),
+    PRIMARY KEY (StudentID, CourseID, EnrollmentDate),
+    FOREIGN KEY (StudentID) REFERENCES Students(StudentID),
+    FOREIGN KEY (CourseID) REFERENCES Courses(CourseID)
+);
+
+-- Step 3: Insert Sample Data
+
+INSERT INTO Students VALUES
+(1, 'Pooja', 20, 'Female', 'CS', 'pooja@gmail.com'),
+(2, 'Amit', 21, 'Male', 'IT', 'amit@gmail.com'),
+(3, 'Neha', 22, 'Female', 'CS', 'neha@gmail.com'),
+(4, 'Rahul', 23, 'Male', 'ENTC', 'rahul@gmail.com'),
+(5, 'Karan', 24, 'Male', 'CS', 'karan@gmail.com'); -- no enrollment
+
+INSERT INTO Courses VALUES
+(101, 'DBMS', 4, 'CS'),
+(102, 'OS', 4, 'CS'),
+(103, 'Networks', 3, 'IT'),
+(104, 'Electronics', 3, 'ENTC');
+
+INSERT INTO Professors VALUES
+(201, 'Dr. Sharma', 'CS', 'sharma@gmail.com'),
+(202, 'Dr. Mehta', 'IT', 'mehta@gmail.com');
+
+INSERT INTO Enrollments VALUES
+(1, 101, '2024-01-01', 3.5),
+(1, 102, '2024-01-01', 2.5),
+(1, 103, '2024-06-01', 3.0),
+(1, 104, '2024-06-01', 3.2), -- 4 courses
+(2, 103, '2024-01-01', 2.5),
+(3, 101, '2024-01-01', 3.0),
+(3, 102, '2024-06-01', 2.0),
+(4, 104, '2024-01-01', 1.5);
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 1. Students who have NOT enrolled in any course
+
+SELECT s.Name
+FROM Students s
+LEFT JOIN Enrollments e ON s.StudentID = e.StudentID
+WHERE e.StudentID IS NULL;
+
+-- 2. Students enrolled in more than 3 courses
+
+SELECT s.Name, COUNT(e.CourseID) AS total_courses
+FROM Students s
+JOIN Enrollments e ON s.StudentID = e.StudentID
+GROUP BY s.StudentID, s.Name
+HAVING COUNT(e.CourseID) > 3;
+
+-- 3. Average grade per course
+
+SELECT c.CourseName, AVG(e.Grade) AS avg_grade
+FROM Courses c
+JOIN Enrollments e ON c.CourseID = e.CourseID
+GROUP BY c.CourseID, c.CourseName;
+
+-- 4. Highest grade in each course
+
+SELECT c.CourseName, MAX(e.Grade) AS highest_grade
+FROM Courses c
+JOIN Enrollments e ON c.CourseID = e.CourseID
+GROUP BY c.CourseID, c.CourseName;
+
+-- 5. Department with highest number of students
+
+SELECT Department, COUNT(*) AS total_students
+FROM Students
+GROUP BY Department
+ORDER BY total_students DESC
+LIMIT 1;
