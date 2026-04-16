@@ -1,0 +1,96 @@
+-- Step 1: Create Database
+CREATE DATABASE company_db;
+USE company_db;
+
+-- Step 2: Create Tables
+
+CREATE TABLE employee (
+    eid INT PRIMARY KEY,
+    ename VARCHAR(50),
+    salary INT
+);
+
+CREATE TABLE manager (
+    eid INT PRIMARY KEY,
+    ename VARCHAR(50)
+);
+
+CREATE TABLE project (
+    projectid INT PRIMARY KEY,
+    project_name VARCHAR(50),
+    manager INT,
+    FOREIGN KEY (manager) REFERENCES manager(eid)
+);
+
+CREATE TABLE assignment (
+    projectid INT,
+    eid INT,
+    PRIMARY KEY (projectid, eid),
+    FOREIGN KEY (projectid) REFERENCES project(projectid),
+    FOREIGN KEY (eid) REFERENCES employee(eid)
+);
+
+-- Step 3: Insert Sample Data
+
+INSERT INTO employee VALUES
+(1, 'Amit', 45000),
+(2, 'Neha', 38000),
+(3, 'Rahul', 50000);
+
+INSERT INTO manager VALUES
+(101, 'Suresh'),
+(102, 'Priya');
+
+INSERT INTO project VALUES
+(201, 'Bank Management', 101),
+(202, 'E-Commerce', 102);
+
+INSERT INTO assignment VALUES
+(201, 1),
+(201, 2),
+(202, 3);
+
+-- Step 4: Alter Table (Add address column)
+
+ALTER TABLE employee
+ADD address VARCHAR(100);
+
+-- Step 5: Query 1 - Employee names and their projects
+
+SELECT e.ename, p.project_name
+FROM employee e
+JOIN assignment a ON e.eid = a.eid
+JOIN project p ON a.projectid = p.projectid;
+
+-- Step 6: Query 2 - Project details with manager names
+
+SELECT p.projectid, p.project_name, m.ename AS manager_name
+FROM project p
+JOIN manager m ON p.manager = m.eid;
+
+-- Step 7: Query 3 - Create view for Bank Management employees
+
+CREATE VIEW bank_project_employees AS
+SELECT e.ename
+FROM employee e
+JOIN assignment a ON e.eid = a.eid
+JOIN project p ON a.projectid = p.projectid
+WHERE p.project_name = 'Bank Management';
+
+-- To check the view
+SELECT * FROM bank_project_employees;
+
+-- Step 8: Query 4 - Employees with salary > 40000
+
+SELECT ename
+FROM employee
+WHERE salary > 40000;
+
+-- Step 9: Query 5 - Increase salary by 2000
+
+UPDATE employee
+SET salary = salary + 2000;
+
+-- Optional: Check updated salaries
+
+SELECT * FROM employee;
