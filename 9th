@@ -1,0 +1,104 @@
+-- Step 1: Create Database
+CREATE DATABASE library_db;
+USE library_db;
+
+-- Step 2: Create Tables with PK & FK
+
+CREATE TABLE Members (
+    MemberID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Email VARCHAR(50),
+    Phone VARCHAR(15),
+    MembershipDate DATE
+);
+
+CREATE TABLE Books (
+    BookID INT PRIMARY KEY,
+    Title VARCHAR(100),
+    Author VARCHAR(50),
+    Genre VARCHAR(50),
+    CopiesAvailable INT
+);
+
+CREATE TABLE BorrowedBooks (
+    BorrowID INT PRIMARY KEY,
+    MemberID INT,
+    BookID INT,
+    BorrowDate DATE,
+    ReturnDate DATE,
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID),
+    FOREIGN KEY (BookID) REFERENCES Books(BookID)
+);
+
+-- Step 3: Create Fines Table (Q1)
+
+CREATE TABLE Fines (
+    FineID INT PRIMARY KEY,
+    MemberID INT,
+    Amount INT,
+    Status VARCHAR(20),
+    FineDate DATE,
+    FOREIGN KEY (MemberID) REFERENCES Members(MemberID)
+);
+
+-- Step 4: Insert Sample Data
+
+INSERT INTO Members VALUES
+(1, 'Amit', 'amit@gmail.com', '9999999999', '2023-01-01'),
+(2, 'Neha', 'neha@gmail.com', '8888888888', '2023-02-01'),
+(3, 'Rahul', 'rahul@gmail.com', '7777777777', '2023-03-01');
+
+INSERT INTO Books VALUES
+(101, 'DBMS', 'Navathe', 'Education', 5),
+(102, 'Java', 'James Gosling', 'Education', 3),
+(103, 'Harry Potter', 'J.K. Rowling', 'Fiction', 4),
+(104, 'C Programming', 'Dennis Ritchie', 'Education', 2);
+
+INSERT INTO BorrowedBooks VALUES
+(201, 1, 101, DATE_SUB(CURDATE(), INTERVAL 10 DAY), NULL),
+(202, 2, 103, DATE_SUB(CURDATE(), INTERVAL 20 DAY), NULL),
+(203, 3, 102, DATE_SUB(CURDATE(), INTERVAL 40 DAY), NULL);
+
+INSERT INTO Fines VALUES
+(301, 1, 100, 'Unpaid', CURDATE()),
+(302, 2, 50, 'Paid', CURDATE());
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 2. Update CopiesAvailable when a book is borrowed (example: BookID = 101)
+
+UPDATE Books
+SET CopiesAvailable = CopiesAvailable - 1
+WHERE BookID = 101;
+
+-- When book is returned (example: BookID = 101)
+
+UPDATE Books
+SET CopiesAvailable = CopiesAvailable + 1
+WHERE BookID = 101;
+
+-- 3. Member Name, Book Title, Borrow Date for last 1 month
+
+SELECT m.Name, b.Title, bb.BorrowDate
+FROM Members m
+JOIN BorrowedBooks bb ON m.MemberID = bb.MemberID
+JOIN Books b ON bb.BookID = b.BookID
+WHERE bb.BorrowDate >= DATE_SUB(CURDATE(), INTERVAL 1 MONTH);
+
+-- 4. Number of books borrowed per genre
+
+SELECT b.Genre, COUNT(*) AS total_borrowed
+FROM BorrowedBooks bb
+JOIN Books b ON bb.BookID = b.BookID
+GROUP BY b.Genre;
+
+-- 5. Top 5 members who borrowed most books
+
+SELECT m.Name, COUNT(bb.BorrowID) AS total_books
+FROM Members m
+JOIN BorrowedBooks bb ON m.MemberID = bb.MemberID
+GROUP BY m.MemberID, m.Name
+ORDER BY total_books DESC
+LIMIT 5;
