@@ -1,0 +1,116 @@
+-- Step 1: Create Database
+CREATE DATABASE online_shop_db;
+USE online_shop_db;
+
+-- Step 2: Create Tables with PK & FK
+
+CREATE TABLE Customers (
+    CustomerID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Email VARCHAR(50),
+    Phone VARCHAR(15),
+    Address VARCHAR(100)
+);
+
+CREATE TABLE Products (
+    ProductID INT PRIMARY KEY,
+    Name VARCHAR(50),
+    Category VARCHAR(50),
+    Price INT,
+    StockQuantity INT
+);
+
+CREATE TABLE Orders (
+    OrderID INT PRIMARY KEY,
+    CustomerID INT,
+    OrderDate DATE,
+    TotalAmount INT,
+    FOREIGN KEY (CustomerID) REFERENCES Customers(CustomerID)
+);
+
+CREATE TABLE OrderDetails (
+    OrderDetailID INT PRIMARY KEY,
+    OrderID INT,
+    ProductID INT,
+    Quantity INT,
+    Subtotal INT,
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID),
+    FOREIGN KEY (ProductID) REFERENCES Products(ProductID)
+);
+
+-- Step 3: Create Payments Table (Q1)
+
+CREATE TABLE Payments (
+    PaymentID INT PRIMARY KEY,
+    OrderID INT,
+    PaymentDate DATE,
+    AmountPaid INT,
+    PaymentMethod VARCHAR(30),
+    FOREIGN KEY (OrderID) REFERENCES Orders(OrderID)
+);
+
+-- Step 4: Insert Sample Data
+
+INSERT INTO Customers VALUES
+(1, 'Amit', 'amit@gmail.com', '9999999999', 'Pune'),
+(2, 'Neha', 'neha@gmail.com', '8888888888', 'Mumbai'),
+(3, 'Rahul', 'rahul@gmail.com', '7777777777', 'Delhi');
+
+INSERT INTO Products VALUES
+(101, 'Laptop', 'Electronics', 60000, 10),
+(102, 'Phone', 'Electronics', 20000, 15),
+(103, 'Shoes', 'Fashion', 3000, 20),
+(104, 'Watch', 'Fashion', 5000, 12);
+
+INSERT INTO Orders VALUES
+(201, 1, '2024-04-01', 80000),
+(202, 2, '2024-04-02', 7000),
+(203, 3, '2024-04-03', 3000);
+
+INSERT INTO OrderDetails VALUES
+(1, 201, 101, 1, 60000),
+(2, 201, 102, 1, 20000),
+(3, 202, 104, 1, 5000),
+(4, 202, 103, 1, 2000),
+(5, 203, 103, 1, 3000);
+
+INSERT INTO Payments VALUES
+(301, 201, '2024-04-01', 80000, 'UPI'),
+(302, 202, '2024-04-02', 7000, 'Card'),
+(303, 203, '2024-04-03', 3000, 'Cash');
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 2. Update stock after order (example: ProductID = 101, Quantity = 1)
+
+UPDATE Products
+SET StockQuantity = StockQuantity - (
+    SELECT Quantity FROM OrderDetails
+    WHERE ProductID = 101 AND OrderID = 201
+)
+WHERE ProductID = 101;
+
+-- 3. Customer Name, Order Date, TotalAmount where TotalAmount > 5000
+
+SELECT c.Name, o.OrderDate, o.TotalAmount
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+WHERE o.TotalAmount > 5000;
+
+-- 4. Total sales per product category
+
+SELECT p.Category, SUM(od.Subtotal) AS total_sales
+FROM OrderDetails od
+JOIN Products p ON od.ProductID = p.ProductID
+GROUP BY p.Category;
+
+-- 5. Top 5 customers who spent most
+
+SELECT c.Name, SUM(o.TotalAmount) AS total_spent
+FROM Customers c
+JOIN Orders o ON c.CustomerID = o.CustomerID
+GROUP BY c.CustomerID, c.Name
+ORDER BY total_spent DESC
+LIMIT 5;
