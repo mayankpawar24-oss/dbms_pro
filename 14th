@@ -1,0 +1,135 @@
+-- Step 1: Create Database
+CREATE DATABASE bank_db;
+USE bank_db;
+
+-- Step 2: Create Tables with PK & FK
+
+CREATE TABLE Customer (
+    customer_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    address VARCHAR(100),
+    phone VARCHAR(15),
+    email VARCHAR(50)
+);
+
+CREATE TABLE Branch (
+    branch_id INT PRIMARY KEY,
+    branch_name VARCHAR(50),
+    location VARCHAR(50),
+    manager_id INT
+);
+
+CREATE TABLE Account (
+    account_id INT PRIMARY KEY,
+    customer_id INT,
+    account_type VARCHAR(20),
+    balance INT,
+    branch_id INT,
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id)
+);
+
+CREATE TABLE Employee (
+    employee_id INT PRIMARY KEY,
+    name VARCHAR(50),
+    position VARCHAR(50),
+    branch_id INT,
+    salary INT,
+    FOREIGN KEY (branch_id) REFERENCES Branch(branch_id)
+);
+
+CREATE TABLE Loan (
+    loan_id INT PRIMARY KEY,
+    customer_id INT,
+    amount INT,
+    loan_type VARCHAR(50),
+    status VARCHAR(20),
+    FOREIGN KEY (customer_id) REFERENCES Customer(customer_id)
+);
+
+CREATE TABLE Transactions (
+    transaction_id INT PRIMARY KEY,
+    account_id INT,
+    transaction_type VARCHAR(20),
+    amount INT,
+    transaction_date DATE,
+    FOREIGN KEY (account_id) REFERENCES Account(account_id)
+);
+
+-- Step 3: Insert Sample Data
+
+INSERT INTO Customer VALUES
+(1, 'Amit', 'Pune', '9999999999', 'amit@gmail.com'),
+(2, 'Neha', 'Mumbai', '8888888888', 'neha@gmail.com'),
+(3, 'Rahul', 'Delhi', '7777777777', 'rahul@gmail.com');
+
+INSERT INTO Branch VALUES
+(101, 'Main Branch', 'Pune', 1001),
+(102, 'City Branch', 'Mumbai', 1002);
+
+INSERT INTO Account VALUES
+(201, 1, 'Savings', 150000, 101),
+(202, 2, 'Current', 50000, 102),
+(203, 3, 'Savings', 120000, 101);
+
+INSERT INTO Employee VALUES
+(1001, 'Manager1', 'Manager', 101, 60000),
+(1002, 'Manager2', 'Manager', 102, 65000);
+
+INSERT INTO Loan VALUES
+(301, 1, 200000, 'Home Loan', 'Approved'),
+(302, 2, 80000, 'Car Loan', 'Pending');
+
+INSERT INTO Transactions VALUES
+(401, 201, 'Deposit', 50000, '2024-04-01'),
+(402, 201, 'Withdrawal', 10000, '2024-04-02'),
+(403, 202, 'Deposit', 20000, '2024-04-03');
+
+-- =====================================================
+-- QUERIES
+-- =====================================================
+
+-- 1. List all customers and their account details
+
+SELECT c.name, a.account_id, a.account_type, a.balance
+FROM Customer c
+JOIN Account a ON c.customer_id = a.customer_id;
+
+-- 2. Total balance in each branch
+
+SELECT b.branch_name, SUM(a.balance) AS total_balance
+FROM Branch b
+JOIN Account a ON b.branch_id = a.branch_id
+GROUP BY b.branch_id, b.branch_name;
+
+-- 3. Customers with loans > 100000
+
+SELECT c.name, l.amount
+FROM Customer c
+JOIN Loan l ON c.customer_id = l.customer_id
+WHERE l.amount > 100000;
+
+-- 4. Transaction history for Account ID = 201 (example)
+
+SELECT *
+FROM Transactions
+WHERE account_id = 201;
+
+-- 5. Customers who have BOTH loan and account
+
+SELECT DISTINCT c.name
+FROM Customer c
+JOIN Account a ON c.customer_id = a.customer_id
+JOIN Loan l ON c.customer_id = l.customer_id;
+
+-- 6. Create view for high-value customers (balance > 100000)
+
+CREATE VIEW high_value_customers AS
+SELECT c.name, a.balance
+FROM Customer c
+JOIN Account a ON c.customer_id = a.customer_id
+WHERE a.balance > 100000;
+
+-- Check view
+
+SELECT * FROM high_value_customers;
